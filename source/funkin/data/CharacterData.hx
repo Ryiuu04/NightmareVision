@@ -65,6 +65,7 @@ class CharacterParser
 		data.position ??= baseInfo.position;
 		data.camera_position ??= baseInfo.camera_position;
 		data.animations ??= baseInfo.animations;
+        data.playerAnimations ??= baseInfo.playerAnimations;
 		data.scale ??= baseInfo.scale;
 		
 		return cast data;
@@ -340,6 +341,7 @@ class CharacterParser
 			position: [0, 0],
 			camera_position: [0, 0],
 			animations: [],
+            playerAnimations: [],
 			scale: 1
 		};
 	}
@@ -416,6 +418,7 @@ typedef CharacterInfo =
 	 * Array of the actual animation data parsed via json.
 	 */
 	var animations:Array<AnimationInfo>;
+    var playerAnimations:Array<AnimationInfo>;
 	
 	/**
 	 * The path to the image of the character.

@@ -66,6 +66,9 @@ class Character extends Bopper
 	public var healthIcon:String = 'face';
 	
 	public var animations:Array<AnimationInfo> = [];
+	public var playerAnimations:Array<AnimationInfo> = [];
+
+    public var playerAnims:Bool = false; // if true, uses the playerAnimations array when "isPlayer = true"
 	
 	// gameover suttffs
 	public var gameoverCharacter:Null<String> = null;
@@ -221,11 +224,11 @@ class Character extends Bopper
 			this.healthColour = json.healthbar_colour;
 		}
 		
-		this.animations = json.animations;
-		if (animations != null && animations.length > 0)
-		{
-			for (anim in animations)
-			{
+        if (isPlayer && playerAnims) this.animations = json.playerAnimations;
+        else this.animations = json.animations;
+		
+		if (animations != null && animations.length > 0) {
+			for (anim in animations) {
 				final animAnim:String = '' + anim.anim;
 				final animName:String = '' + anim.name;
 				final animFps:Int = anim.fps;
@@ -235,23 +238,12 @@ class Character extends Bopper
 				final flipX = anim.flipX ?? false;
 				final flipY = anim.flipY ?? false;
 				
-				if (animIndices.length > 0)
-				{
-					addAnimByIndices(animAnim, animName, animIndices, animFps, animLoop, flipX, flipY);
-				}
-				else
-				{
-					addAnimByPrefix(animAnim, animName, animFps, animLoop, flipX, flipY);
-				}
+				if (animIndices.length > 0) addAnimByIndices(animAnim, animName, animIndices, animFps, animLoop, flipX, flipY);
+				else addAnimByPrefix(animAnim, animName, animFps, animLoop, flipX, flipY);
 				
-				if (anim.offsets != null && anim.offsets.length > 1)
-				{
-					addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
-				}
+				if (anim.offsets != null && anim.offsets.length > 1) addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
 			}
-		}
-		else
-		{
+		} else {
 			addAnimByPrefix('idle', 'BF idle dance', 24, false);
 		}
 		

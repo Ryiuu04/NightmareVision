@@ -13,7 +13,8 @@ class DiscordClient
 	/**
 	 * NightmareVisions specific id
 	 */
-	public static final NMV_ID:String = '1252033037680513115';
+	// public static final NMV_ID:String = '1252033037680513115';
+	public static final NMV_ID:String = '1254011273524281435'; // remixed is back. at least for now lmao
 	
 	/**
 	 * Additional thread to run discord tasks without lagspikes

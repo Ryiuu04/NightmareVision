@@ -2663,6 +2663,8 @@ class PlayState extends MusicBeatState
 	
 	public var showCombo:Bool = true;
 	public var showRating:Bool = true;
+
+    var ratingNumGroup:FlxTypedGroup<FlxSprite>; // yeah... i actually need this...
 	
 	function popUpScore(note:Note = null):Void
 	{
@@ -2683,7 +2685,7 @@ class PlayState extends MusicBeatState
 		
 		var field:PlayField = note.playField;
 		
-		if (!practiceMode && !cpuControlled && !(field?.autoPlayed ?? false))
+		if (!practiceMode && /*!cpuControlled &&*/ !(field?.autoPlayed ?? false)) // sry, botplay scoring is good for videos
 		{
 			if (defaultScoreAddition) songScore += judgeScore;
 			if (!note.ratingDisabled)
@@ -2693,7 +2695,82 @@ class PlayState extends MusicBeatState
 				RecalculateRating(false);
 			}
 		}
-		callHUDFunc(hud -> hud.popUpScore(daRating, combo, note)); // only pushing the image bc is anyone ever gonna need anything else???
+        if (!ClientPrefs.ratingOnGame) callHUDFunc(hud -> hud.popUpScore(daRating, combo, note)); // only pushing the image bc is anyone ever gonna need anything else???
+        else {
+            var hud = cast(playHUD, funkin.game.huds.PsychHUD);
+
+            var rating:FlxSprite = new FlxSprite().loadGraphic(Paths.image(hud.ratingPrefix + daRating.image + hud.ratingSuffix));
+
+            var offsetX:Float = 300; // 300 so the rating stuff doesn't shade gf
+            var offsetY:Float = 0;
+
+            switch(stage.curStage) {
+                default: 
+                    offsetX += GF_X;
+                    offsetY = GF_Y;
+            }
+
+            if (ratingNumGroup == null) {
+                ratingNumGroup = new FlxTypedGroup();
+                insert(members.indexOf(playFields), ratingNumGroup);
+            }
+
+            scripts.call('onPopUpScore', [note, daRating, rating, ratingNumGroup]);
+
+            rating.screenCenter();
+			rating.x = -40 + (offsetX);
+			rating.y = 300 + (30 + offsetY);
+            rating.acceleration.y = 550;
+            rating.velocity.y -= FlxG.random.int(140, 175);
+            rating.velocity.x -= FlxG.random.int(0, 10);
+            @:privateAccess rating.visible = (!ClientPrefs.hideHud && hud.showRating);
+            rating.setGraphicSize(Std.int(rating.width * 0.7));
+			rating.antialiasing = ClientPrefs.globalAntialiasing;
+            rating.updateHitbox();
+
+		    insert(members.indexOf(playFields), rating);
+
+            FlxTween.tween(rating, {alpha: 0}, 0.2, { startDelay: Conductor.crotchet * 0.001 });
+
+            rating.scale.set(0.785, 0.785);
+			FlxTween.tween(rating.scale, {x: 0.7, y: 0.7}, 0.5, {ease: FlxEase.expoOut});
+
+            var seperatedScore:Array<Int> = [];
+
+            if(combo >= 1000) {
+                seperatedScore.push(Math.floor(combo / 1000) % 10);
+            }
+            seperatedScore.push(Math.floor(combo / 100) % 10);
+            seperatedScore.push(Math.floor(combo / 10) % 10);
+            seperatedScore.push(combo % 10);
+
+            var daLoop:Int = 0;
+            for (i in seperatedScore)
+            {
+                var numScore:FlxSprite = new FlxSprite().loadGraphic(Paths.image(hud.comboPrefix + 'num' + Std.int(i) + hud.ratingSuffix));
+                numScore.screenCenter();
+				numScore.x = (43 * daLoop) - 90 + offsetX;
+				numScore.y = 450 + (30 + offsetY);
+                numScore.antialiasing = ClientPrefs.globalAntialiasing;
+                numScore.setGraphicSize(Std.int(numScore.width * 0.5));
+                numScore.updateHitbox();
+
+                numScore.acceleration.y = FlxG.random.int(200, 300);
+                numScore.velocity.y -= FlxG.random.int(140, 160);
+                numScore.velocity.x = FlxG.random.float(-5, 5);
+                @:privateAccess numScore.visible = (!ClientPrefs.hideHud && hud.showRatingNum);
+
+                //if (combo >= 10 || combo == 0)
+                    ratingNumGroup.add(numScore);
+                    // insert(members.indexOf(playFields), numScore);
+
+                FlxTween.tween(numScore, {alpha: 0}, 0.2, { onComplete: function(tween:FlxTween) { numScore.destroy(); },  startDelay: Conductor.crotchet * 0.002 });
+
+                daLoop++;
+            }
+		            
+            scripts.call('onPopUpScorePost', [note, daRating, rating, ratingNumGroup]);
+        }
 	}
 	
 	function onKeyPress(event:KeyboardEvent):Void
@@ -2901,7 +2978,15 @@ class PlayState extends MusicBeatState
 		
 		if (lastBeatHit >= curBeat) return;
 		
-		if (generatedMusic) notes.sort(FlxSort.byY, ClientPrefs.downScroll ? FlxSort.ASCENDING : FlxSort.DESCENDING);
+		if (generatedMusic) {
+            notes.sort(function(order:Int, Obj1:Note, Obj2:Note):Int {
+                var val1 = Obj1.isSustainNote ? 0 : 1;
+                var val2 = Obj2.isSustainNote ? 0 : 1;
+
+                if (val1 != val2) return FlxSort.byValues(order, val1, val2);
+                return FlxSort.byY(order, Obj1, Obj2);
+            });
+        }
 		
 		handleBoppers(curBeat);
 		

@@ -62,6 +62,8 @@ class ClientPrefs
 	@saveVar public static var pauseMusic:String = 'Tea Time';
 	
 	@saveVar public static var camFollowsCharacters:Bool = true;
+
+    @saveVar public static var ratingOnGame:Bool = true;
 	
 	// gameplay ------------------------------------------------------------------------//
 	@saveVar public static var guitarHeroSustains:Bool = true;

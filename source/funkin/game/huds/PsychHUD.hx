@@ -35,9 +35,9 @@ class PsychHUD extends BaseHUD
 	var timeBar:Bar;
 	var pixelZoom:Float = 6; // idgaf
 	
-	var ratingPrefix:String = "";
-	var ratingSuffix:String = '';
-	var comboPrefix:String = "";
+	public var ratingPrefix:String = "";
+	public var ratingSuffix:String = '';
+	public var comboPrefix:String = "";
 	
 	var comboTween:Bool = true;
 	
@@ -149,8 +149,8 @@ class PsychHUD extends BaseHUD
 		}
 		
 		final tempScore:String = 'Score: ${FlxStringUtil.formatMoney(score, false)}'
-			+ (!parent.instakillOnMiss ? ' $textDivider Misses: ${misses}' : "")
-			+ ' $textDivider Accuracy: ${str}';
+			+ (!parent.instakillOnMiss ? ' $textDivider Combo Breaks: ${misses}' : "")
+			+ ' $textDivider Rating: ${str}';
 			
 		if (!missed && !parent.cpuControlled) doScoreBop();
 		

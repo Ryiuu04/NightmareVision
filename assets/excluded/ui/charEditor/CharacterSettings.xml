@@ -5,11 +5,16 @@
 
             <vbox>
                 <label text="Animations:" verticalAlign="center" />
-                <dropdown width="200" searchable="true" searchPrompt="idle" id="animationsDropdown">
-                    <data>
 
-                    </data>
-                </dropdown>
+                <hbox>
+                    <dropdown width="300" searchable="true" searchPrompt="idle" id="animationsDropdown">
+                        <data>
+
+                        </data>
+                    </dropdown>
+
+                    <checkbox text="Player Animations?" id="playerAnimsCheckbox"  verticalAlign="center"  tooltip="If enabled, loads the player animations on the player side"/>
+                </hbox>
 
                 <spacer height="1"/>
                 <rule />

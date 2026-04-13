@@ -560,6 +560,8 @@ class ChartEditorState extends haxe.ui.backend.flixel.UIState
 		root.cameras = [camHUD];
 		
 		add(ui = new ChartEditorUI(this));
+        ui.songDialog.metronomeVolumeStepper.value = 0; // I CANT THINK WITH THIS SHIT BEEPING IN MY HEAD
+        updateVolume();
 	}
 	
 	function createFriends()

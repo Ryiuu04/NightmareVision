@@ -45,6 +45,9 @@ class VisualsUISubState extends BaseOptionsMenu
 		
 		var option:Option = new Option('Camera Note Follow', "If unchecked, hitting notes will no longer have the camera follow in its direction.", 'camFollowsCharacters', 'bool', true);
 		addOption(option);
+
+		var option:Option = new Option('Ratings on Game', 'If checked, Ratings texts like "Kutty" or "Sick" will appear in game instead of the hud.', 'ratingOnGame', 'bool', true);
+		addOption(option);
 		
 		super();
 	}
