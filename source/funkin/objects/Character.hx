@@ -66,9 +66,6 @@ class Character extends Bopper
 	public var healthIcon:String = 'face';
 	
 	public var animations:Array<AnimationInfo> = [];
-	public var playerAnimations:Array<AnimationInfo> = [];
-
-    public var playerAnims:Bool = false; // if true, uses the playerAnimations array when "isPlayer = true"
 	
 	// gameover suttffs
 	public var gameoverCharacter:Null<String> = null;
@@ -224,8 +221,7 @@ class Character extends Bopper
 			this.healthColour = json.healthbar_colour;
 		}
 		
-        if (isPlayer && playerAnims) this.animations = json.playerAnimations;
-        else this.animations = json.animations;
+        this.animations = json.animations;
 		
 		if (animations != null && animations.length > 0) {
 			for (anim in animations) {

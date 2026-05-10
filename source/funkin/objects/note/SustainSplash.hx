@@ -25,7 +25,6 @@ class SustainSplash extends FunkinSprite implements funkin.game.modchart.IModNot
 	{
 		super(x, y);
 
-        if(ClientPrefs.downScroll) flipY = true;
         updateHitbox();
 		
 		rgbShader = NoteUtil.initRGBShader(this, noteData, 0, player);
@@ -39,9 +38,6 @@ class SustainSplash extends FunkinSprite implements funkin.game.modchart.IModNot
 		
 		final animData = _skin.susSplashAnims;
 
-        var downscrollCompensation:Float = 0;
-        if (ClientPrefs.downScroll) downscrollCompensation = 100;
-
 		var noteData = -1;
 		for (group in animData)
 		{
@@ -51,7 +47,7 @@ class SustainSplash extends FunkinSprite implements funkin.game.modchart.IModNot
 				final animName = '${anim.anim}$noteData';
 				
 				animation.addByPrefix(animName, anim.xmlName, anim.fps, anim.looping);
-				addOffset(animName, anim.offsets[0], anim.offsets[1] + downscrollCompensation);
+				addOffset(animName, anim.offsets[0], anim.offsets[1]);
 			}
 		}
 		

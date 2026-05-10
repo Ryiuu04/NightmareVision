@@ -282,24 +282,6 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 			character.isPlayer = ui.value.toBool();
 			character.flipX = (character.originalFlipX != character.isPlayer);
 			
-            if (character.playerAnims) {
-                var bkpAnims:Array<AnimationInfo> = [];
-    
-                if (character.isPlayer) { // becomes a player
-                    bkpAnims = character.animations;
-                    character.animations = character.playerAnimations;
-                } else { // becomes a opponent
-                    bkpAnims = character.animations;
-                    character.playerAnimations = character.animations;
-                    character.animations = backupAnims;
-                }
-    
-                backupAnims = bkpAnims;
-    
-                updateAnimList();
-                updateDialogBox();
-            }
-            
 			positionCharacter();
 		}
 		
@@ -425,28 +407,6 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 		}
 		
 		// dialogebox stuff
-
-        uiElements.characterDialogBox.playerAnimsCheckbox.onChange = (ui) -> {
-            var isChecked:Bool = ui.value.toBool();
-    
-            if (character.isPlayer) {
-                if (character.playerAnims) character.playerAnimations = character.animations;
-                else backupAnims = character.animations;
-            }
-
-            character.playerAnims = isChecked;
-
-            if (character.isPlayer && character.playerAnims) {
-                character.animations = character.playerAnimations;
-            } else {
-                character.animations = backupAnims;
-            }
-
-            updateAnimList();
-            updateDialogBox();
-            positionCharacter();
-        }
-		
 		uiElements.characterDialogBox.danceEveryStepper.onChange = (ui) -> {
 			character.danceEveryNumBeats = ui.value.toInt();
 		}
@@ -1580,63 +1540,6 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 					anim: "singRIGHT",
 					loop: false,
 					name: "Dad Sing Note RIGHT"
-				}
-			],
-            playerAnimations: [
-				{
-					loop: false,
-					offsets: [
-						0,
-						0
-					],
-					fps: 24,
-					anim: "idle",
-					indices: [],
-					name: "Dad idle dance"
-				},
-				{
-					offsets: [
-						0,
-						0
-					],
-					indices: [],
-					fps: 24,
-					anim: "singLEFT",
-					loop: false,
-					name: "Dad Sing Note RIGHT"
-				},
-				{
-					offsets: [
-						0,
-						0
-					],
-					indices: [],
-					fps: 24,
-					anim: "singDOWN",
-					loop: false,
-					name: "Dad Sing Note DOWN"
-				},
-				{
-					offsets: [
-						0,
-						0
-					],
-					indices: [],
-					fps: 24,
-					anim: "singUP",
-					loop: false,
-					name: "Dad Sing Note UP"
-				},
-				{
-					offsets: [
-						0,
-						0
-					],
-					indices: [],
-					fps: 24,
-					anim: "singRIGHT",
-					loop: false,
-					name: "Dad Sing Note LEFT"
 				}
 			],
 			no_antialiasing: false,
