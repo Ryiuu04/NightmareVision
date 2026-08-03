@@ -420,6 +420,10 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 		uiElements.characterDialogBox.vSliceSusCheckbox.onChange = (ui) -> {
 			character.vSliceSustains = ui.value.toBool();
 		}
+
+		uiElements.characterDialogBox.ghostEnabledCheckbox.onChange = (ui) -> {
+			character.ghostsEnabled = ui.value.toBool();
+		}
 		
 		uiElements.characterDialogBox.antialiasingCheckbox.onChange = (ui) -> {
 			character.noAntialiasing = !ui.value.toBool();
@@ -430,7 +434,7 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 			character.scalableOffsets = ui.value.toBool();
 		}
 		
-		for (i in [uiElements.characterDialogBox.flipXCheckbox, uiElements.characterDialogBox.vSliceSusCheckbox, uiElements.characterDialogBox.antialiasingCheckbox, uiElements.characterDialogBox.scaledOffsetsCheckbox, uiElements.characterDialogBox.flipXAnimCheckbox, uiElements.characterDialogBox.flipYAnimCheckbox, uiElements.characterDialogBox.animationLoopCheckbox])
+		for (i in [uiElements.characterDialogBox.flipXCheckbox, uiElements.characterDialogBox.vSliceSusCheckbox, uiElements.characterDialogBox.ghostEnabledCheckbox, uiElements.characterDialogBox.antialiasingCheckbox, uiElements.characterDialogBox.scaledOffsetsCheckbox, uiElements.characterDialogBox.flipXAnimCheckbox, uiElements.characterDialogBox.flipYAnimCheckbox, uiElements.characterDialogBox.animationLoopCheckbox])
 		{
 			i.onClick = (ui) -> {
 				addUndoAction(CHANGED_CHECKBOX, i, !i.value);
@@ -1142,6 +1146,7 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 		
 		uiElements.characterDialogBox.flipXCheckbox.selected = character.originalFlipX;
 		uiElements.characterDialogBox.vSliceSusCheckbox.selected = character.vSliceSustains;
+		uiElements.characterDialogBox.ghostEnabledCheckbox.selected = character.ghostsEnabled;
 		uiElements.characterDialogBox.antialiasingCheckbox.value = !character.noAntialiasing;
 		uiElements.characterDialogBox.scaledOffsetsCheckbox.value = character.scalableOffsets;
 		
@@ -1445,6 +1450,7 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 				"camera_position": character.cameraPosition,
 				"flip_x": character.originalFlipX,
 				"vslice_sustains": character.vSliceSustains,
+				"ghosts_enabled": character.ghostsEnabled,
 				"no_antialiasing": character.noAntialiasing,
 				"healthbar_colour": character.healthColour,
 				"scalableOffsets": character.scalableOffsets,
@@ -1481,6 +1487,8 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 	override function destroy()
 	{
 		super.destroy();
+		FunkinAssets.cache.clearStoredMemory();
+		FunkinAssets.cache.clearUnusedMemory();
 	}
 	
 	final templateCharacterFile:CharacterInfo =
@@ -1551,6 +1559,7 @@ class CharacterEditorState extends UIState // MUST EXTEND UI STATE needed for ac
 			healthicon: "face",
 			flip_x: false,
 			vslice_sustains: false,
+			ghosts_enabled: true,
 			healthbar_colour: FlxColor.GRAY,
 			camera_position: [
 				0,

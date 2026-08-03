@@ -1,6 +1,6 @@
 package funkin.states.substates;
 
-import funkin.objects.AttachedAlphabet;
+import funkin.objects.nodes.AttachedNode;
 import funkin.objects.CheckboxThingie;
 import funkin.objects.Alphabet;
 
@@ -17,7 +17,7 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 	
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private var checkboxGroup:FlxTypedGroup<CheckboxThingie>;
-	private var grpTexts:FlxTypedGroup<AttachedAlphabet>;
+	private var grpTexts:FlxTypedGroup<Alphabet>;
 	
 	function getOptions()
 	{
@@ -96,7 +96,7 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
 		
-		grpTexts = new FlxTypedGroup<AttachedAlphabet>();
+		grpTexts = new FlxTypedGroup<Alphabet>();
 		add(grpTexts);
 		
 		checkboxGroup = new FlxTypedGroup<CheckboxThingie>();
@@ -106,7 +106,7 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 		
 		for (i in 0...optionsArray.length)
 		{
-			var optionText:Alphabet = new Alphabet(0, 70 * i, optionsArray[i].name, true, false, 0.05, 0.8);
+			var optionText:Alphabet = new Alphabet(0, 70 * i, optionsArray[i].name, true, 0.8);
 			optionText.isMenuItem = true;
 			optionText.x += 300;
 			/*optionText.forceX = 300;
@@ -126,10 +126,14 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 			}
 			else
 			{
-				var valueText:AttachedAlphabet = new AttachedAlphabet('' + optionsArray[i].getValue(), optionText.width + 80, true, 0.8);
-				valueText.sprTracker = optionText;
-				valueText.copyAlpha = true;
+				var valueText:Alphabet = new Alphabet(0, 0, Std.string(optionsArray[i].getValue()), true, 0.8);
+				valueText.isMenuItem = false;
 				valueText.ID = i;
+				
+				var attach = new AttachedNode(valueText, optionText);
+				add(attach);
+				attach.positionOffset.x = optionText.width + 80;
+				
 				grpTexts.add(valueText);
 				optionsArray[i].setChild(valueText);
 			}

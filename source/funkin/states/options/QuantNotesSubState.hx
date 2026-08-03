@@ -12,6 +12,7 @@ import funkin.objects.*;
 import funkin.states.substates.*;
 import funkin.game.shaders.*;
 import funkin.backend.MusicBeatSubstate;
+import funkin.objects.nodes.AttachedNode;
 
 class QuantNotesSubState extends MusicBeatSubstate
 {
@@ -20,7 +21,7 @@ class QuantNotesSubState extends MusicBeatSubstate
 	
 	private var grpNumbers:FlxTypedGroup<Alphabet>;
 	private var grpNotes:FlxTypedGroup<FlxSprite>;
-	private var grpQuants:FlxTypedGroup<AttachedAlphabet>;
+	private var grpQuants:FlxTypedGroup<Alphabet>;
 	private var shaderArray:Array<HSLColorSwap> = [];
 	var curValue:Float = 0;
 	var holdTime:Float = 0;
@@ -77,7 +78,7 @@ class QuantNotesSubState extends MusicBeatSubstate
 		
 		grpNotes = new FlxTypedGroup<FlxSprite>();
 		add(grpNotes);
-		grpQuants = new FlxTypedGroup<AttachedAlphabet>();
+		grpQuants = new FlxTypedGroup<Alphabet>();
 		add(grpQuants);
 		grpNumbers = new FlxTypedGroup<Alphabet>();
 		add(grpNumbers);
@@ -95,10 +96,13 @@ class QuantNotesSubState extends MusicBeatSubstate
 			var note:FlxSprite = new FlxSprite(posX, yPos);
 			note.frames = Paths.getSparrowAtlas('QUANTNOTE_assets');
 			
-			var txt:AttachedAlphabet = new AttachedAlphabet(quantizations[i], 0, 0, true);
-			txt.sprTracker = note;
-			txt.copyAlpha = true;
+			var txt:Alphabet = new Alphabet(0, 0, quantizations[i], true);
+			txt.isMenuItem = false;
 			add(txt);
+			
+			var attach = new AttachedNode(txt, note);
+			add(attach);
+			
 			var animations:Array<String> = ['purple0', 'blue0', 'green0', 'red0'];
 			note.animation.addByPrefix('idle', animations[i % 4]);
 			note.animation.play('idle');
@@ -112,7 +116,7 @@ class QuantNotesSubState extends MusicBeatSubstate
 			shaderArray.push(newShader);
 		}
 		
-		hsbText = new Alphabet(0, 0, "Hue    Saturation  Luminosity", false, false, 0, 0.65);
+		hsbText = new Alphabet(0, 0, "Hue    Saturation  Luminosity", false, 0.65);
 		hsbText.x = posX + 240;
 		add(hsbText);
 		

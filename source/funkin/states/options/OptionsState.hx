@@ -25,8 +25,8 @@ class OptionsState extends MusicBeatState
 	
 	private static var curSelected:Int = 0;
 	public static var menuBG:FlxSprite;
-
-    var justLeftSubState = false;
+	
+	var justLeftSubState = false;
 	
 	public function openSelectedSubstate(label:String)
 	{
@@ -35,8 +35,7 @@ class OptionsState extends MusicBeatState
 			case 'Notes':
 				openSubState(new funkin.states.options.NoteSettingsSubState());
 			case 'Controls':
-                final gamepad = FlxG.gamepads.getFirstActiveGamepad();
-				openSubState(new funkin.states.options.ControlsSubState(gamepad != null ? Gamepad(gamepad.id) : Keys));
+				openSubState(new funkin.states.options.ControlsSubState());
 			case 'Graphics':
 				openSubState(new funkin.states.options.GraphicsSettingsSubState());
 			case 'Visuals and UI':
@@ -66,20 +65,22 @@ class OptionsState extends MusicBeatState
 		bg.screenCenter();
 		add(bg);
 		
+		scriptGroup.set('bg', bg);
+		
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
 		
 		for (i in 0...options.length)
 		{
-			var optionText:Alphabet = new Alphabet(0, 0, options[i], true, false);
+			var optionText:Alphabet = new Alphabet(0, 0, options[i], true);
 			optionText.screenCenter();
 			optionText.y += (100 * (i - (options.length / 2))) + 50;
 			grpOptions.add(optionText);
 		}
 		
-		selectorLeft = new Alphabet(0, 0, '>', true, false);
+		selectorLeft = new Alphabet(0, 0, '>', true);
 		add(selectorLeft);
-		selectorRight = new Alphabet(0, 0, '<', true, false);
+		selectorRight = new Alphabet(0, 0, '<', true);
 		add(selectorRight);
 		
 		changeSelection();
@@ -94,7 +95,7 @@ class OptionsState extends MusicBeatState
 		ClientPrefs.flush();
 		
 		super.closeSubState();
-        justLeftSubState = true;
+		justLeftSubState = true;
 	}
 	
 	override function update(elapsed:Float)
@@ -127,7 +128,7 @@ class OptionsState extends MusicBeatState
 		}
 		
 		scriptGroup.call('onUpdatePost', [elapsed]);
-        justLeftSubState = false;
+		justLeftSubState = false;
 	}
 	
 	function changeSelection(diff:Int = 0)

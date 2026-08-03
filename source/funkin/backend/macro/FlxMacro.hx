@@ -143,24 +143,6 @@ class FlxMacro
 		return fields;
 	}
 	
-	/**
-	 * Adds zIndex to `FlxBasic`'
-	 */
-	public static macro function buildFlxBasic():Array<haxe.macro.Expr.Field>
-	{
-		var fields:Array<haxe.macro.Expr.Field> = Context.getBuildFields();
-		
-		fields.push(
-			{
-				name: "zIndex",
-				access: [haxe.macro.Expr.Access.APublic],
-				kind: FVar(macro :Int, macro $v{0}),
-				pos: Context.currentPos(),
-			});
-			
-		return fields;
-	}
-	
 	public static macro function buildFlxCamera():Array<haxe.macro.Expr.Field>
 	{
 		var fields:Array<haxe.macro.Expr.Field> = Context.getBuildFields();
@@ -214,6 +196,31 @@ class FlxMacro
 				pos: Context.currentPos()
 			});
 			
+		for (field in fields)
+		{
+			switch (field.kind)
+			{
+				default:
+				case FFun(fun):
+					if (field.name == '__get__rotated__matrix')
+					{
+						// removes the line that translates the sdcroll to the camera poistion grrrrr
+						
+						fun.expr = macro
+							{
+								__angleMatrix.identity();
+								__angleMatrix.translate(-width * 0.5, -height * 0.5);
+								if (shakeMatrixFix) __angleMatrix.translate(_fxShakeXOffset, _fxShakeYOffset);
+								__angleMatrix.scale(scaleX, scaleY);
+								if (!(_sinScrollAngle == 0 && _sinScrollAngle == 1)) __angleMatrix.rotateWithTrig(_cosScrollAngle, _sinScrollAngle);
+								__angleMatrix.translate(width * 0.5, height * 0.5);
+								__angleMatrix.scale(FlxG.scaleMode.scale.x, FlxG.scaleMode.scale.y);
+								return __angleMatrix;
+							};
+					}
+			}
+		}
+		
 		return fields;
 	}
 	
@@ -280,7 +287,7 @@ class FlxMacro
 									$expr;
 									rgbShader = null;
 									// looks confusing im just making "ArrayTools.clear(rgbR)", "ArrayTools.clear(rgbG)", etc..
-									$b{[for (i in shaderParams) macro funkin.utils.tools.ArrayTools.clear(this.$i)]}
+									$b{[for (i in shaderParams) macro funkin.utils.ArrayUtil.clear(this.$i)]}
 								}
 						default:
 							throw "Invalid field";

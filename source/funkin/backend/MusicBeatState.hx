@@ -1,6 +1,6 @@
 package funkin.backend;
 
-import funkin.scripting.PluginsManager;
+import funkin.backend.plugins.ModPlugin;
 
 import flixel.FlxG;
 import flixel.addons.transition.FlxTransitionableState;
@@ -17,11 +17,20 @@ import funkin.input.Controls;
 
 class MusicBeatState extends FlxUIState
 {
-	static final _defaultTransState:Class<BaseTransitionState> = SwipeTransition;
+	/**
+	 * The considered Engine default transition. Any `FunkinTransitionState` defined as `ENGINE_DEFAULT` falls back to this.
+	 */
+	public static final DEFAULT_TRANSITION_STATE:FunkinTransitionState = SWIPE;
 	
-	// change these to change the transition
-	public static var transitionInState:Null<Class<BaseTransitionState>> = null;
-	public static var transitionOutState:Null<Class<BaseTransitionState>> = null;
+	/**
+	 * The transition type to use whenever exiting the state and entering another.
+	 */
+	public static var transitionInState:FunkinTransitionState = ENGINE_DEFAULT;
+	
+	/**
+	 * The transition type to use whenever entering a new state.
+	 */
+	public static var transitionOutState:FunkinTransitionState = ENGINE_DEFAULT;
 	
 	public function new() super();
 	
@@ -56,7 +65,7 @@ class MusicBeatState extends FlxUIState
 		if (FunkinAssets.exists(scriptFile))
 		{
 			var newScript = FunkinScript.fromFile(scriptFile, scriptName);
-			if (newScript.__garbage)
+			if (newScript.parsingFailed())
 			{
 				newScript = FlxDestroyUtil.destroy(newScript);
 				return false;
@@ -81,14 +90,14 @@ class MusicBeatState extends FlxUIState
 	{
 		super.create();
 		
-		if (!FlxTransitionableState.skipNextTransOut)
+		if (!FlxTransitionableState.skipNextTransOut && transitionOutState != NONE)
 		{
-			openSubState(Type.createInstance(transitionOutState ?? _defaultTransState, [TransitionStatus.OUT]));
+			openSubState(Type.createInstance(BaseTransitionState.getTransitionFromState(transitionOutState), [TransitionStatus.OUT]));
 		}
 		
 		FlxTransitionableState.skipNextTransOut = false;
 		
-		PluginsManager.callOnScripts('onStateCreate');
+		ModPlugin.instance.callOnPlugins('onStateCreate');
 	}
 	
 	/**
@@ -110,20 +119,23 @@ class MusicBeatState extends FlxUIState
 		updateCurStep();
 		updateBeat();
 		
-		if (oldStep != curStep)
+		if (curStep > oldStep)
 		{
-			if (curStep > 0) stepHit();
-			
-			if (PlayState.SONG != null)
+			for (step in oldStep...curStep)
 			{
-				if (oldStep < curStep) updateSection();
-				else rollbackSection();
+				curStep = step + 1;
+				
+				updateBeat();
+				
+				if (curStep >= 0) stepHit();
 			}
+			
+			if (PlayState.SONG != null) updateSection();
 		}
+		else if (PlayState.SONG != null) rollbackSection();
 		
 		final scriptArgs = [elapsed];
 		scriptGroup.call('onUpdate', scriptArgs);
-		PluginsManager.callOnScripts('onUpdate', scriptArgs);
 		super.update(elapsed);
 	}
 	
@@ -183,19 +195,19 @@ class MusicBeatState extends FlxUIState
 	{
 		if (curStep % 4 == 0) beatHit();
 		scriptGroup.call('onStepHit', []);
-		PluginsManager.callOnScripts('onStepHit');
+		ModPlugin.instance.callOnPlugins('onStepHit');
 	}
 	
 	public function beatHit():Void
 	{
 		scriptGroup.call('onBeatHit', []);
-		PluginsManager.callOnScripts('onBeatHit');
+		ModPlugin.instance.callOnPlugins('onBeatHit');
 	}
 	
 	public function sectionHit():Void
 	{
 		scriptGroup.call('onSectionHit', []);
-		PluginsManager.callOnScripts('onSectionHit');
+		ModPlugin.instance.callOnPlugins('onSectionHit');
 	}
 	
 	function getBeatsOnSection():Float
@@ -211,9 +223,9 @@ class MusicBeatState extends FlxUIState
 		@:nullSafety(Off)
 		if (FlxG.sound != null && FlxG.sound.music != null) FlxG.sound.music.onComplete = null;
 		
-		if (!FlxTransitionableState.skipNextTransIn)
+		if (!FlxTransitionableState.skipNextTransIn && transitionInState != NONE)
 		{
-			openSubState(Type.createInstance(transitionInState ?? _defaultTransState, [TransitionStatus.IN, onOutroComplete]));
+			openSubState(Type.createInstance(BaseTransitionState.getTransitionFromState(transitionInState), [TransitionStatus.IN, onOutroComplete]));
 			return;
 		}
 		

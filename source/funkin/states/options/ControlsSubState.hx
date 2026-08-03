@@ -37,6 +37,59 @@ class ControlsSubState extends MusicBeatSubstate
 	
 	public var state:BindState = BindState.NONE;
 	
+	// separated the typedef groups into public static vars so that theyre easily moddable if u have custom keybinds
+	public static var NOTES_GROUP = [];
+	public static var UI_GROUP = [];
+	public static var WINDOW_GROUP = [];
+	public static var VOLUME_GROUP = [];
+	public static var DEBUG_GROUP = [];
+	
+	public static function resetGroups()
+	{
+		NOTES_GROUP = [
+			{label: "Left", action: NOTE_LEFT},
+			{label: "Down", action: NOTE_DOWN},
+			{label: "Up", action: NOTE_UP},
+			{label: "Right", action: NOTE_RIGHT},
+			{label: "Dodge", action: NOTE_DODGE},
+			null,
+		];
+		
+		UI_GROUP = [
+			{label: "Left", action: UI_LEFT},
+			{label: "Down", action: UI_DOWN},
+			{label: "Up", action: UI_UP},
+			{label: "Right", action: UI_RIGHT},
+			null,
+			{label: "Reset", action: RESET},
+			{label: "Accept", action: ACCEPT},
+			{label: "Back", action: BACK},
+			{label: "Pause", action: PAUSE},
+			null,
+		];
+
+		WINDOW_GROUP = [
+			{label: "Fullscreen", action: FULLSCREEN},
+			null,
+		];
+		
+		VOLUME_GROUP = [
+			{label: "Mute", action: "volume_mute"},
+			{label: "Up", action: "volume_up"},
+			{label: "Down", action: "volume_down"},
+			null,
+		];
+		
+		DEBUG_GROUP = [
+			{label: "Key 1", action: "debug_1"},
+			{label: "Key 2", action: "debug_2"},
+			{label: "Debug Display", action: SWITCH_DEBUG_DISPLAY},
+			{label: "Soft Reload", action: SOFT_RELOAD},
+			{label: "Hard Reload", action: HARD_RELOAD},
+			null,
+		];
+	}
+	
 	var optionsList:Array<ControlsOption> = [];
 	
 	var controlsGroup = new FlxTypedContainer<ControlsGroup>();
@@ -46,7 +99,7 @@ class ControlsSubState extends MusicBeatSubstate
 	var resetKeysLabel:Alphabet;
 	var resetGamepadLabel:Alphabet;
 	
-	public function new(device:Device)
+	public function new()
 	{
 		super();
 		
@@ -68,53 +121,32 @@ class ControlsSubState extends MusicBeatSubstate
 		bg.screenCenter();
 		add(bg);
 		
-		final group = new ControlsGroup("NOTES", [
-			{label: "Left", action: NOTE_LEFT},
-			{label: "Down", action: NOTE_DOWN},
-			{label: "Up", action: NOTE_UP},
-			{label: "Right", action: NOTE_RIGHT},
-			null,
-		], 0);
+		final group = new ControlsGroup("NOTES", NOTES_GROUP, 0);
 		controlsGroup.add(group);
 		
 		resetGamepadLabel = new Alphabet(0, 80 * group.groupLastIndex, "Reset to Default Buttons", true);
 		resetGamepadLabel.screenCenter(X);
 		add(resetGamepadLabel);
 		
-		final group = new ControlsGroup("UI", [
-			{label: "Left", action: UI_LEFT},
-			{label: "Down", action: UI_DOWN},
-			{label: "Up", action: UI_UP},
-			{label: "Right", action: UI_RIGHT},
-			null,
-			{label: "Reset", action: RESET},
-			{label: "Accept", action: ACCEPT},
-			{label: "Back", action: BACK},
-			{label: "Pause", action: PAUSE},
-			null,
-		], group.groupLastIndex);
+		final group = new ControlsGroup("UI", UI_GROUP, group.groupLastIndex);
+		controlsGroup.add(group);
+
+		final group = new ControlsGroup("WINDOW", WINDOW_GROUP, group.groupLastIndex);
 		controlsGroup.add(group);
 		
-		final group = new ControlsGroup("VOLUME", [
-			{label: "Mute", action: "volume_mute"},
-			{label: "Up", action: "volume_up"},
-			{label: "Down", action: "volume_down"},
-			null,
-		], group.groupLastIndex);
+		final group = new ControlsGroup("VOLUME", VOLUME_GROUP, group.groupLastIndex);
 		controlsGroup.add(group);
 		
-		final group = new ControlsGroup("DEBUG", [
-			{label: "Key 1", action: "debug_1"},
-			{label: "Key 2", action: "debug_2"},
-			null,
-		], group.groupLastIndex);
+		final group = new ControlsGroup("DEBUG", DEBUG_GROUP, group.groupLastIndex);
 		controlsGroup.add(group);
 		
 		resetKeysLabel = new Alphabet(0, 80 * group.groupLastIndex, "Reset to Default Keys", true);
 		resetKeysLabel.screenCenter(X);
 		add(resetKeysLabel);
 		
-		this.device = device;
+		final gamepad = FlxG.gamepads.getFirstActiveGamepad();
+		
+		this.device = gamepad != null ? Gamepad(gamepad.id) : Keys;
 		
 		refreshOptionsList();
 		
@@ -396,13 +428,13 @@ class ControlsGroup extends FlxContainer
 	{
 		super();
 		
-		this.label = new Alphabet(0, (80 * groupIndex++) - 55, label);
+		this.label = new Alphabet(0, (80 * groupIndex++) - 55, label, true);
 		this.label.screenCenter(X);
 		add(this.label);
 		
 		for (option in options)
 		{
-			if (option != null) this.options.add(new ControlsOption(200, (80 * groupIndex), option.label, option.action));
+			if (option != null) this.options.add(new ControlsOption(100, (80 * groupIndex), option.label, option.action));
 			groupIndex++;
 		}
 		add(this.options);
@@ -426,8 +458,8 @@ class ControlsOption extends FlxSpriteContainer
 		super(x, y);
 		this.label = new Alphabet(0, 0, label, true);
 		add(this.label);
-		
-		binds = new FlxTypedSpriteContainer<Alphabet>(400, -55);
+
+		binds = new FlxTypedSpriteContainer<Alphabet>(700, -55);
 		add(binds);
 		
 		this.action = action;

@@ -4,11 +4,12 @@ import flixel.FlxG;
 import flixel.input.FlxInput;
 import flixel.input.actions.FlxAction;
 import flixel.input.actions.FlxActionInput;
-import flixel.input.actions.FlxActionManager;
 import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
+
+import funkin.states.options.ControlsSubState;
 
 // at some point i do wanna rework this to be simpler and easier to work with
 
@@ -47,6 +48,13 @@ enum abstract Action(String) to String from String
 	var BACK = "back";
 	var PAUSE = "pause";
 	var RESET = "reset";
+	
+	var FULLSCREEN = "fullscreen";
+	
+	var SWITCH_DEBUG_DISPLAY = "switch_debug_display";
+	
+	var SOFT_RELOAD = "soft_reload";
+	var HARD_RELOAD = "hard_reload";
 }
 
 enum Device
@@ -70,10 +78,15 @@ enum Control
 	NOTE_LEFT;
 	NOTE_RIGHT;
 	NOTE_DOWN;
+	NOTE_DODGE;
 	RESET;
 	ACCEPT;
 	BACK;
 	PAUSE;
+	FULLSCREEN;
+	SWITCH_DEBUG_DISPLAY;
+	SOFT_RELOAD;
+	HARD_RELOAD;
 }
 
 enum KeyboardScheme
@@ -101,6 +114,9 @@ class Controls extends FlxActionSet
 		}
 		FlxG.gamepads.deviceConnected.add(gamepadConnected);
 		FlxG.gamepads.deviceDisconnected.add(gamepadDisconnected);
+		
+		instance.customActions.clear();
+		ControlsSubState.resetGroups();
 	}
 	
 	static function gamepadConnected(gamepad:FlxGamepad)
@@ -147,7 +163,14 @@ class Controls extends FlxActionSet
 	var _pause = new FlxActionDigital(Action.PAUSE);
 	var _reset = new FlxActionDigital(Action.RESET);
 	
+	var _fullscreen = new FlxActionDigital(Action.FULLSCREEN);
+	var switch_debug_display = new FlxActionDigital(Action.SWITCH_DEBUG_DISPLAY);
+	
+	var _soft_reload = new FlxActionDigital(Action.SOFT_RELOAD);
+	var _hard_reload = new FlxActionDigital(Action.HARD_RELOAD);
+	
 	public var actions:Map<Action, FlxActionDigital> = new Map<Action, FlxActionDigital>();
+	public var customActions:Map<Action, FlxActionDigital> = new Map<Action, FlxActionDigital>();
 	
 	public var gamepadsAdded:Array<Int> = [];
 	public var keyboardScheme = KeyboardScheme.None;
@@ -276,6 +299,22 @@ class Controls extends FlxActionSet
 	
 	inline function get_NOTE_DODGE_R() return _note_dodgeR.check();
 	
+	public var FULLSCREEN(get, never):Bool;
+	
+	inline function get_FULLSCREEN() return _fullscreen.check();
+	
+	public var SWITCH_DEBUG_DISPLAY(get, never):Bool;
+	
+	inline function get_SWITCH_DEBUG_DISPLAY() return switch_debug_display.check();
+	
+	public var SOFT_RELOAD(get, never):Bool;
+	
+	inline function get_SOFT_RELOAD() return _soft_reload.check();
+	
+	public var HARD_RELOAD(get, never):Bool;
+	
+	inline function get_HARD_RELOAD() return _hard_reload.check();
+	
 	public function new(name, scheme = None)
 	{
 		super(name);
@@ -304,10 +343,17 @@ class Controls extends FlxActionSet
 		add(_note_leftR);
 		add(_note_rightR);
 		add(_note_downR);
+		add(_note_dodge);
+		add(_note_dodgeP);
+		add(_note_dodgeR);
 		add(_accept);
 		add(_back);
 		add(_pause);
 		add(_reset);
+		add(_fullscreen);
+		add(switch_debug_display);
+		add(_soft_reload);
+		add(_hard_reload);
 		
 		for (action in digitalActions)
 			actions[action.name] = action;
@@ -327,10 +373,15 @@ class Controls extends FlxActionSet
 			case NOTE_DOWN: _note_down;
 			case NOTE_LEFT: _note_left;
 			case NOTE_RIGHT: _note_right;
+			case NOTE_DODGE: _note_dodge;
 			case ACCEPT: _accept;
 			case BACK: _back;
 			case PAUSE: _pause;
 			case RESET: _reset;
+			case FULLSCREEN: _fullscreen;
+			case SWITCH_DEBUG_DISPLAY: switch_debug_display;
+			case SOFT_RELOAD: _soft_reload;
+			case HARD_RELOAD: _hard_reload;
 		}
 	}
 	
@@ -376,6 +427,10 @@ class Controls extends FlxActionSet
 				func(_note_down, PRESSED);
 				func(_note_downP, JUST_PRESSED);
 				func(_note_downR, JUST_RELEASED);
+			case NOTE_DODGE:
+				func(_note_dodge, PRESSED);
+				func(_note_dodgeP, JUST_PRESSED);
+				func(_note_dodgeR, JUST_RELEASED);
 			case ACCEPT:
 				func(_accept, JUST_PRESSED);
 			case BACK:
@@ -384,6 +439,14 @@ class Controls extends FlxActionSet
 				func(_pause, JUST_PRESSED);
 			case RESET:
 				func(_reset, JUST_PRESSED);
+			case FULLSCREEN:
+				func(_fullscreen, JUST_PRESSED);
+			case SWITCH_DEBUG_DISPLAY:
+				func(switch_debug_display, JUST_PRESSED);
+			case SOFT_RELOAD:
+				func(_soft_reload, JUST_PRESSED);
+			case HARD_RELOAD:
+				func(_hard_reload, JUST_PRESSED);
 		}
 	}
 	
@@ -428,15 +491,93 @@ class Controls extends FlxActionSet
 	}
 	
 	/**
+	 * Dynamically registers a new custom action with a binded key attached.
+	 * Creates the standard, pressed, and released variants.
+	 * 
+	 * Good for mods that have more than 4 keys, or have a custom menu that might need specified keybinds separate from the pre-existing ones.
+	 */
+	public function addCustomKey(_name:String, _keys:Array<FlxKey>):Void
+	{
+		final name = _name.toLowerCase();
+		var keys = _keys.copy();
+		while (keys.length < 2)
+			keys.push(NONE);
+			
+		var actionNormal = new FlxActionDigital(name);
+		var actionPress = new FlxActionDigital(name + "-press");
+		var actionRelease = new FlxActionDigital(name + "-release");
+		
+		add(actionNormal);
+		add(actionPress);
+		add(actionRelease);
+		
+		// add to BOTH custom & normal actions, customActions simply keeps track of which actions are custom & actions actually handles.. well... the action
+		for (map in [customActions, actions])
+		{
+			map.set(name, actionNormal);
+			map.set('$name-press', actionPress);
+			map.set('$name-release', actionRelease);
+		}
+		
+		// make it bindable yo
+		ClientPrefs.addCustomKey(name, keys);
+		customBind(name, keys);
+	}
+	
+	/**
+	 * Checks for the status of the custom bind based on the inputted name.
+	 * 
+	 * Lets say you want to check the status of `note_poop`'s variants.
+	 * To find release, you would input `note_poop-release`, and for pressed you would input `note_poop-press`.
+	 * If you just want the normal check, do simply `note_poop`
+	 * @param _name 
+	 */
+	public function checkCustom(_name:String)
+	{
+		final name = _name.toLowerCase();
+		
+		if (customActions.exists(name))
+		{
+			final action = customActions.get(name);
+			
+			if (action != null)
+			{
+				return action.check();
+			}
+		}
+		
+		return false;
+	}
+	
+	public function customBind(name:String, keys:Array<FlxKey>)
+	{
+		trace('binded $name to $keys');
+		
+		var copyKeys:Array<FlxKey> = keys.copy();
+		for (i in copyKeys)
+		{
+			if (i == -1) copyKeys.remove(i);
+		}
+		
+		for (_act in [name, '$name-press', '$name-release'])
+		{
+			final action = customActions.get(_act);
+			final state = _act.contains('-press') ? JUST_PRESSED : _act.contains('-release') ? JUST_RELEASED : PRESSED;
+			
+			addKeys(action, copyKeys, state);
+		}
+	}
+	
+	/**
 	 * Sets all actions that pertain to the binder to trigger when the supplied keys are used.
 	 * If binder is a literal you can inline this
 	 */
 	public function bindKeys(control:Control, keys:Array<FlxKey>)
 	{
 		var copyKeys:Array<FlxKey> = keys.copy();
-		for (i in 0...copyKeys.length)
+		for (i in copyKeys)
 		{
-			if (i == NONE) copyKeys.remove(i);
+			if (i == -1) copyKeys.remove(i);
 		}
 		
 		inline forEachBound(control, (action, state) -> addKeys(action, copyKeys, state));
@@ -449,9 +590,9 @@ class Controls extends FlxActionSet
 	public function unbindKeys(control:Control, keys:Array<FlxKey>)
 	{
 		var copyKeys:Array<FlxKey> = keys.copy();
-		for (i in 0...copyKeys.length)
+		for (i in copyKeys)
 		{
-			if (i == NONE) copyKeys.remove(i);
+			if (i == -1) copyKeys.remove(i);
 		}
 		
 		inline forEachBound(control, (action, _) -> removeKeys(action, copyKeys));
@@ -460,7 +601,7 @@ class Controls extends FlxActionSet
 	inline static function addKeys(action:FlxActionDigital, keys:Array<FlxKey>, state:FlxInputState)
 	{
 		for (key in keys)
-			if (key != NONE) action.addKey(key, state);
+			if (key != -1) action.addKey(key, state);
 	}
 	
 	static function removeKeys(action:FlxActionDigital, keys:Array<FlxKey>)
@@ -491,11 +632,26 @@ class Controls extends FlxActionSet
 				inline bindKeys(Control.NOTE_DOWN, keysMap.get('note_down'));
 				inline bindKeys(Control.NOTE_LEFT, keysMap.get('note_left'));
 				inline bindKeys(Control.NOTE_RIGHT, keysMap.get('note_right'));
+				inline bindKeys(Control.NOTE_DODGE, keysMap.get('note_dodge'));
 				
 				inline bindKeys(Control.ACCEPT, keysMap.get('accept'));
 				inline bindKeys(Control.BACK, keysMap.get('back'));
 				inline bindKeys(Control.PAUSE, keysMap.get('pause'));
 				inline bindKeys(Control.RESET, keysMap.get('reset'));
+				
+				inline bindKeys(Control.FULLSCREEN, keysMap.get('fullscreen'));
+				inline bindKeys(Control.SWITCH_DEBUG_DISPLAY, keysMap.get('switch_debug_display'));
+				
+				inline bindKeys(Control.SOFT_RELOAD, keysMap.get('soft_reload'));
+				inline bindKeys(Control.HARD_RELOAD, keysMap.get('hard_reload'));
+				
+				for (i in customActions.keys())
+				{
+					if (i.endsWith('-release') || i.endsWith('-press')) continue;
+					
+					customBind(i, keysMap.get(i));
+				}
+				
 			case Duo(true):
 				inline bindKeys(Control.UI_UP, [W]);
 				inline bindKeys(Control.UI_DOWN, [S]);
@@ -505,6 +661,7 @@ class Controls extends FlxActionSet
 				inline bindKeys(Control.NOTE_DOWN, [S]);
 				inline bindKeys(Control.NOTE_LEFT, [A]);
 				inline bindKeys(Control.NOTE_RIGHT, [D]);
+				inline bindKeys(Control.NOTE_DODGE, [SPACE]);
 				inline bindKeys(Control.ACCEPT, [G, Z]);
 				inline bindKeys(Control.BACK, [H, X]);
 				inline bindKeys(Control.PAUSE, [ONE]);
@@ -518,6 +675,7 @@ class Controls extends FlxActionSet
 				inline bindKeys(Control.NOTE_DOWN, [FlxKey.DOWN]);
 				inline bindKeys(Control.NOTE_LEFT, [FlxKey.LEFT]);
 				inline bindKeys(Control.NOTE_RIGHT, [FlxKey.RIGHT]);
+				inline bindKeys(Control.NOTE_DODGE, [FlxKey.SPACE]);
 				inline bindKeys(Control.ACCEPT, [O]);
 				inline bindKeys(Control.BACK, [P]);
 				inline bindKeys(Control.PAUSE, [ENTER]);
@@ -585,6 +743,7 @@ class Controls extends FlxActionSet
 			Control.NOTE_DOWN => binds.get(Action.NOTE_DOWN),
 			Control.NOTE_LEFT => binds.get(Action.NOTE_LEFT),
 			Control.NOTE_RIGHT => binds.get(Action.NOTE_RIGHT),
+			Control.NOTE_DODGE => binds.get(Action.NOTE_DODGE),
 			Control.PAUSE => [START],
 			Control.RESET => [8]
 		]);

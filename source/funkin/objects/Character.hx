@@ -113,9 +113,11 @@ class Character extends Bopper
 	public var ghostAlpha:Float = 0.6;
 	
 	/**
-	 * Last hit row index
+	 * The hit time of the last note in milliseconds.
+	 * 
+	 * Only used for double note ghosts.
 	 */
-	public var mostRecentRow:Int = 0; // for ghost anims n shit
+	public var lastHitTime:Float = -1000;
 	
 	// Used on Character Editor
 	public var isPlayerInEditor:Null<Bool> = null;
@@ -182,6 +184,7 @@ class Character extends Bopper
 		
 		this.healthIcon = json.healthicon;
 		this.vSliceSustains = json.vslice_sustains;
+		this.ghostsEnabled = json.ghosts_enabled;
 		this.singDuration = json.sing_duration;
 		this.noAntialiasing = json.no_antialiasing;
 		
@@ -255,7 +258,7 @@ class Character extends Bopper
 			return;
 		}
 		
-		if (animTimer > 0)
+		if (animTimer > 0 && !getAnimName().endsWith('-return'))
 		{
 			animTimer -= elapsed;
 			if (animTimer <= 0)
@@ -274,6 +277,10 @@ class Character extends Bopper
 		{
 			dance(forceDance);
 			finishAnim();
+		}
+		else if (getAnimName().endsWith('-return') && isAnimFinished())
+		{
+			dance(forceDance);
 		}
 		
 		if (getAnimName().startsWith('sing') || holding) holdTimer += elapsed;
@@ -318,12 +325,21 @@ class Character extends Bopper
 	}
 	
 	/**
-	 * Plays the characters idle animation
+	 * Plays the characters idle animation.
+	 * First checks if a transition to idle (-return) animation exists,
+	 * then plays the idle animation.
 	 */
 	override function dance(forced:Bool = false)
 	{
 		if (debugMode || specialAnim) return;
-		super.dance(forced);
+		if (hasAnim(getAnimName() + '-return'))
+		{
+			playAnim(getAnimName() + '-return', true);
+		}
+		else
+		{
+			super.dance(forced);
+		}
 	}
 	
 	override function playAnim(animToPlay:String, isForced:Bool = false, isReversed:Bool = false, frame:Int = 0)

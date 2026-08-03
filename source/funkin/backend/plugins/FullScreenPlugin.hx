@@ -2,17 +2,26 @@ package funkin.backend.plugins;
 
 import flixel.FlxBasic;
 
+import funkin.input.Controls;
+
 /**
  * Adds the bind of f11 to fullscreen.
  */
 @:nullSafety
 class FullScreenPlugin extends FlxBasic
 {
-	static var instance:Null<FullScreenPlugin> = null;
+	@:nullSafety(Off)
+	static var instance:FullScreenPlugin;
 	
 	public static function init()
 	{
-		if (instance == null) FlxG.plugins.addPlugin(instance = new FullScreenPlugin());
+		if (instance == null)
+		{
+			FlxG.plugins.addPlugin(instance = new FullScreenPlugin());
+			#if debug
+			FlxG.console.registerClass(FullScreenPlugin);
+			#end
+		}
 	}
 	
 	public function new()
@@ -25,7 +34,7 @@ class FullScreenPlugin extends FlxBasic
 	{
 		super.update(elapsed);
 		
-		if (FlxG.keys.justPressed.F11)
+		if (Controls.instance.FULLSCREEN)
 		{
 			// i was gonna change the actual key to fullscreen but thats like
 			// really deep
